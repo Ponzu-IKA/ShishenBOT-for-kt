@@ -1,24 +1,28 @@
 package ponzu_ika.shishenbot
 
-import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
+import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.Commands
+import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.requests.GatewayIntent
 import java.io.File
 import javax.security.auth.login.LoginException
 
 class Main : ListenerAdapter() {
-    val GUILD_ID = "987312320554348574"
+    val GUILD_ID = "1136216422356373507"
 
 
     fun initial(token: String) {
         try {
             val jda = JDABuilder.createLight(token,
                 GatewayIntent.GUILD_MESSAGES)
-                .addEventListeners(MarkovChain())
+                .addEventListeners(
+                    MarkovNormal(),
+                    MarkovUser()
+                )
                 .setActivity(Activity.playing("開発ing"))
                 .addEventListeners(this)
                 .build()
@@ -26,11 +30,19 @@ class Main : ListenerAdapter() {
             jda.awaitReady()
 
             val guild = jda.getGuildById(GUILD_ID)!!
-            val testcommand = Commands.slash("genshishen","ししぇんが言ってそうで言ってないことを言わせます")
+            val markovnormal =
+                Commands.slash("markovnormal","ししぇんが言ってそうで言ってないことを言わせます")
+                    .addOptions( OptionData(OptionType.INTEGER,"num","1~10まで言わせる回数を選べる無くても動く")
+                        .setRequiredRange(1,10))
 
-            guild.updateCommands()
-                .addCommands(testcommand)
-                .queue()
+
+            val markovuserselected =
+                Commands.slash("markovuserselected","みんなが選んだししぇん語録の中から言わせます")
+                    .addOptions(OptionData(OptionType.INTEGER,"num","1~10まで言わせる回数を選べる無くても動く")
+                        .setRequiredRange(1,10))
+            guild.updateCommands().addCommands(
+                markovnormal,
+                markovuserselected).queue()
         }catch (e: LoginException){
             e.printStackTrace()
         }
@@ -43,6 +55,6 @@ class Main : ListenerAdapter() {
 
 }
 
-fun main() = runBlocking {
+fun main()  {
     Main().initial(File("token").readText())
 }
